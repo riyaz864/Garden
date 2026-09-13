@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#d9a7e8">
+  <title>Love Garden 💖</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background: #dcb6e8;
+      color: #fff;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        opacity 0.9s ease,
+        visibility 0.9s ease;
+      overflow: hidden;
+    }
+
+    .screen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    /* ---------------- OPENING SCREENS ---------------- */
+
+    .opening {
+      cursor: pointer;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.42), transparent 28%),
+        radial-gradient(circle at 80% 75%, rgba(255,185,232,.42), transparent 30%),
+        linear-gradient(135deg, #cfa6e8, #f2b9d9 48%, #c7b4ed);
+    }
+
+    .opening::before,
+    .opening::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      filter: blur(55px);
+      opacity: .3;
+      animation: ambientGlow 6s ease-in-out infinite alternate;
+    }
+
+    .opening::before {
+      background: #ffb9e4;
+      top: -100px;
+      left: -80px;
+    }
+
+    .opening::after {
+      background: #a98eea;
+      right: -90px;
+      bottom: -100px;
+      animation-delay: -3s;
+    }
+
+    .opening-content {
+      position: relative;
+      z-index: 2;
+      width: min(90%, 700px);
+      padding: 35px;
+      text-align: center;
+      animation: openingFloat 4s ease-in-out infinite;
+    }
+
+    .opening-message {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 7vw, 4.7rem);
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: .5px;
+      text-shadow:
+        0 3px 18px rgba(104, 52, 119, .3),
+        0 0 35px rgba(255,255,255,.25);
+      animation: messageReveal 1.6s ease both;
+    }
+
+    .opening-hint {
+      margin-top: 28px;
+      font-size: clamp(.78rem, 2.4vw, 1rem);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: .65;
+      animation: hintPulse 2.2s ease-in-out infinite;
+    }
+
+    .tiny-heart {
+      position: absolute;
+      font-size: 20px;
+      opacity: .5;
+      animation: heartDrift 6s ease-in-out infinite;
+    }
+
+    .h1 { top: 18%; left: 15%; animation-delay: -1s; }
+    .h2 { top: 25%; right: 13%; animation-delay: -3s; }
+    .h3 { bottom: 20%; left: 20%; animation-delay: -4s; }
+    .h4 { bottom: 15%; right: 18%; animation-delay: -2s; }
+
+    /* ---------------- GARDEN ---------------- */
+
+    #garden {
+      display: block;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(255,255,255,.25), transparent 23%),
+        radial-gradient(circle at 85% 15%, rgba(239,188,255,.32), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(255,177,220,.32), transparent 40%),
+        linear-gradient(135deg, #cdaee8 0%, #eab6d7 45%, #bfa9e9 100%);
+    }
+
+    #garden::before,
+    #garden::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(65px);
+      opacity: .28;
+      animation: gardenGlow 7s ease-in-out infinite alternate;
+    }
+
+    #garden::before {
+      width: 330px;
+      height: 330px;
+      background: #ffb9de;
+      left: -100px;
+      top: 30%;
+    }
+
+    #garden::after {
+      width: 380px;
+      height: 380px;
+      background: #b9a7ff;
+      right: -130px;
+      bottom: 0;
+      animation-delay: -4s;
+    }
+
+    #gardenArea {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .garden-header {
+      position: absolute;
+      z-index: 30;
+      top: max(24px, env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: none;
+      width: 90%;
+    }
+
+    .garden-title {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 6vw, 3.7rem);
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-shadow: 0 4px 18px rgba(92, 46, 108, .28);
+    }
+
+    .garden-subtitle {
+      margin: 8px 0 0;
+      font-size: clamp(.85rem, 2.5vw, 1.05rem);
+      letter-spacing: 1px;
+      opacity: .82;
+    }
+
+    .counter {
+      margin-top: 8px;
+      font-size: .78rem;
+      opacity: .65;
+    }
+
+    /* ---------------- FLOWERS ---------------- */
+
+    .flower {
+      position: absolute;
+      transform: translate(-50%, -50%) scale(0);
+      z-index: 10;
+      font-size: clamp(28px, 5vw, 48px);
+      line-height: 1;
+      pointer-events: none;
+      filter:
+        drop-shadow(0 5px 8px rgba(86, 42, 94, .2))
+        drop-shadow(0 0 10px rgba(255,255,255,.22));
+      animation: bloom .65s cubic-bezier(.17,.89,.32,1.4) forwards;
+    }
+
+    .flower::after {
+      content: "";
+      position: absolute;
+      width: 10px;
+      height: 28px;
+      background: linear-gradient(to bottom, rgba(83,150,91,.8), rgba(65,112,76,.55));
+      border-radius: 50%;
+      left: 50%;
+      top: 70%;
+      transform: translateX(-50%);
+      z-index: -1;
+      opacity: .7;
+    }
+
+    /* ---------------- LOVE MESSAGE ---------------- */
+
+    .love-message {
+      position: absolute;
+      z-index: 50;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+      padding: 8px 15px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.2);
+      border: 1px solid rgba(255,255,255,.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 7px 25px rgba(89, 48, 105, .17);
+      color: #fff;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(.8rem, 2.5vw, 1rem);
+      pointer-events: none;
+      animation: loveFloat 1.6s ease-out forwards;
+    }
+
+    /* ---------------- SPARKLES ---------------- */
+
+    .sparkle {
+      position: absolute;
+      z-index: 40;
+      transform: translate(-50%, -50%) scale(.3);
+      pointer-events: none;
+      font-size: clamp(14px, 3vw, 24px);
+      animation: sparkleBurst .8s ease-out forwards;
+    }
+
+    /* ---------------- FALLING PETALS ---------------- */
+
+    #petals {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .petal {
+      position: absolute;
+      top: -60px;
+      opacity: 0;
+      font-size: var(--size);
+      animation:
+        petalFall var(--duration) linear var(--delay) infinite;
+      filter: drop-shadow(0 2px 4px rgba(88,42,96,.12));
+    }
+
+    /* ---------------- MILESTONES ---------------- */
+
+    #milestone {
+      position: absolute;
+      z-index: 100;
+      left: 50%;
+      bottom: max(105px, calc(88px + env(safe-area-inset-bottom)));
+      transform: translate(-50%, 20px);
+      width: min(90%, 520px);
+      padding: 13px 20px;
+      text-align: center;
+      border-radius: 999px;
+      background: rgba(255,255,255,.2);
+      border: 1px solid rgba(255,255,255,.4);
+      box-shadow: 0 10px 30px rgba(90,45,110,.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(.85rem, 2.8vw, 1.05rem);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #milestone.show {
+      animation: milestoneShow 2.5s ease forwards;
+    }
+
+    /* ---------------- CONTROLS ---------------- */
+
+    .controls {
+      position: absolute;
+      z-index: 120;
+      left: 50%;
+      bottom: max(22px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      width: 94%;
+      pointer-events: none;
+    }
+
+    .garden-button {
+      pointer-events: auto;
+      border: 1px solid rgba(255,255,255,.4);
+      color: white;
+      background: rgba(255,255,255,.17);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 999px;
+      padding: 11px 20px;
+      min-width: 120px;
+      font: inherit;
+      font-size: .9rem;
+      cursor: pointer;
+      box-shadow: 0 7px 22px rgba(78,39,98,.16);
+      transition:
+        transform .2s ease,
+        background .2s ease,
+        box-shadow .2s ease;
+    }
+
+    .garden-button:hover {
+      background: rgba(255,255,255,.28);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(78,39,98,.22);
+    }
+
+    .garden-button:active {
+      transform: scale(.94);
+    }
+
+    /* ---------------- ANIMATIONS ---------------- */
+
+    @keyframes messageReveal {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(.96);
+        filter: blur(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes openingFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-7px); }
+    }
+
+    @keyframes hintPulse {
+      0%, 100% { opacity: .4; }
+      50% { opacity: .75; }
+    }
+
+    @keyframes ambientGlow {
+      from { transform: scale(1); opacity: .22; }
+      to { transform: scale(1.25); opacity: .36; }
+    }
+
+    @keyframes heartDrift {
+      0%, 100% {
+        transform: translateY(0) rotate(-5deg);
+        opacity: .3;
+      }
+      50% {
+        transform: translateY(-22px) rotate(8deg);
+        opacity: .7;
+      }
+    }
+
+    @keyframes gardenGlow {
+      from { transform: scale(1); }
+      to { transform: scale(1.2); }
+    }
+
+    @keyframes bloom {
+      0% {
+        transform: translate(-50%, -50%) scale(0) rotate(-20deg);
+        opacity: 0;
+      }
+      65% {
+        transform: translate(-50%, -50%) scale(1.18) rotate(8deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+
+    @keyframes loveFloat {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -35%) scale(.7);
+      }
+      15% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      75% {
+        opacity: 1;
+        transform: translate(-50%, -145%) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -190%) scale(.92);
+      }
+    }
+
+    @keyframes sparkleBurst {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(.2) rotate(0deg);
+      }
+      20% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform:
+          translate(
+            calc(-50% + var(--dx)),
+            calc(-50% + var(--dy))
+          )
+          scale(.8)
+          rotate(var(--rotation));
+      }
+    }
+
+    @keyframes petalFall {
+      0% {
+        transform: translate3d(0, -70px, 0) rotate(0deg);
+        opacity: 0;
+      }
+      8% {
+        opacity: var(--opacity);
+      }
+      50% {
+        transform:
+          translate3d(var(--sway), 55vh, 0)
+          rotate(180deg);
+      }
+      90% {
+        opacity: var(--opacity);
+      }
+      100% {
+        transform:
+          translate3d(calc(var(--sway) * -0.6), 115vh, 0)
+          rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes milestoneShow {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, 20px) scale(.9);
+      }
+      12%, 78% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -8px) scale(.97);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .opening-content {
+        padding: 20px;
+      }
+
+      .garden-title {
+        font-size: 2rem;
+      }
+
+      .garden-subtitle {
+        font-size: .82rem;
+      }
+
+      .controls {
+        gap: 8px;
+      }
+
+      .garden-button {
+        min-width: 112px;
+        padding: 10px 15px;
+        font-size: .82rem;
+      }
+
+      .flower {
+        font-size: 34px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+
+      .screen {
+        transition-duration: .2s;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+
+    <!-- STEP 1 -->
+    <section id="opening1" class="screen opening active">
+      <span class="tiny-heart h1">♡</span>
+      <span class="tiny-heart h2">✦</span>
+      <span class="tiny-heart h3">♡</span>
+      <span class="tiny-heart h4">✧</span>
+
+      <div class="opening-content">
+        <h1 class="opening-message">
+          Happy Birthday, Dallu! 🎂💖
+        </h1>
+        <div class="opening-hint">Tap anywhere ✦</div>
+      </div>
+    </section>
+
+    <!-- STEP 2 -->
+    <section id="opening2" class="screen opening">
+      <span class="tiny-heart h1">✧</span>
+      <span class="tiny-heart h2">♡</span>
+      <span class="tiny-heart h3">✦</span>
+      <span class="tiny-heart h4">♡</span>
+
+      <div class="opening-content">
+        <h1 class="opening-message">
+          Here is a little gift for you 🎁💕
+        </h1>
+        <div class="opening-hint">Tap anywhere ✦</div>
+      </div>
+    </section>
+
+    <!-- STEP 3 -->
+    <section id="garden" class="screen">
+      <div id="petals"></div>
+
+      <div class="garden-header">
+        <h1 class="garden-title">✿ Love Garden ✿</h1>
+        <p class="garden-subtitle">Click anywhere to plant a flower</p>
+        <div class="counter">
+          Flowers planted: <span id="flowerCount">0</span>
+        </div>
+      </div>
+
+      <div id="gardenArea"></div>
+
+      <div id="milestone"></div>
+
+      <div class="controls">
+        <button id="clearButton" class="garden-button" type="button">
+          Clear Garden
+        </button>
+        <button id="surpriseButton" class="garden-button" type="button">
+          Surprise ✨
+        </button>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      /* ---------------- STATE ---------------- */
+
+      let currentStep = 1;
+      let flowerCount = 0;
+      let surpriseRunning = false;
+      let milestoneTimer = null;
+
+      const flowers = [
+        "🌸",
+        "🌷",
+        "🌺",
+        "🌻",
+        "🌼",
+        "🪻",
+        "🌹",
+        "💮",
+        "🌱"
+      ];
+
+      const loveMessages = [
+        "I love you Dallu ❤️",
+        "I love you Darling 💕",
+        "I love you Superiya 🥰",
+        "I love you Mayalu 🌸"
+      ];
+
+      const sparkleCharacters = [
+        "✨",
+        "✦",
+        "✧",
+        "♡",
+        "❀"
+      ];
+
+      const petalCharacters = [
+        "🌸",
+        "🌷",
+        "❀",
+        "✿"
+      ];
+
+      const opening1 = document.getElementById("opening1");
+      const opening2 = document.getElementById("opening2");
+      const garden = document.getElementById("garden");
+      const gardenArea = document.getElementById("gardenArea");
+      const petals = document.getElementById("petals");
+      const flowerCountElement = document.getElementById("flowerCount");
+      const milestone = document.getElementById("milestone");
+      const clearButton = document.getElementById("clearButton");
+      const surpriseButton = document.getElementById("surpriseButton");
+
+      /* ---------------- HELPERS ---------------- */
+
+      function randomItem(array) {
+        return array[Math.floor(Math.random() * array.length)];
+      }
+
+      function random(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      /* ---------------- OPENING SEQUENCE ---------------- */
+
+      function goToStep(step) {
+        if (step === 2) {
+          opening1.classList.remove("active");
+
+          setTimeout(() => {
+            opening2.classList.add("active");
+          }, 120);
+
+          currentStep = 2;
+        }
+
+        if (step === 3) {
+          opening2.classList.remove("active");
+
+          setTimeout(() => {
+            garden.classList.add("active");
+            startPetals();
+          }, 250);
+
+          currentStep = 3;
+        }
+      }
+
+      opening1.addEventListener("click", () => {
+        if (currentStep === 1) {
+          goToStep(2);
+        }
+      });
+
+      opening2.addEventListener("click", () => {
+        if (currentStep === 2) {
+          goToStep(3);
+        }
+      });
+
+      /* ---------------- FALLING PETALS ---------------- */
+
+      function createPetal() {
+        const petal = document.createElement("div");
+
+        petal.className = "petal";
+        petal.textContent = randomItem(petalCharacters);
+
+        petal.style.left = random(0, 100) + "%";
+        petal.style.setProperty("--size", random(13, 25) + "px");
+        petal.style.setProperty("--duration", random(8, 16) + "s");
+        petal.style.setProperty("--delay", random(-16, 0) + "s");
+        petal.style.setProperty("--sway", random(-120, 120) + "px");
+        petal.style.setProperty("--opacity", random(.2, .52));
+
+        petals.appendChild(petal);
+      }
+
+      function startPetals() {
+        if (petals.dataset.started === "true") return;
+
+        petals.dataset.started = "true";
+
+        for (let i = 0; i < 22; i++) {
+          createPetal();
+        }
+      }
+
+      /* ---------------- GARDEN INTERACTION ---------------- */
+
+      gardenArea.addEventListener("pointerdown", event => {
+        if (currentStep !== 3) return;
+
+        plantFlower(event.clientX, event.clientY);
+      });
+
+      /* ---------------- PLANT FLOWER ---------------- */
+
+      function plantFlower(x, y) {
+        if (currentStep !== 3) return;
+
+        const flower = document.createElement("div");
+
+        flower.className = "flower";
+        flower.textContent = randomItem(flowers);
+
+        flower.style.left = x + "px";
+        flower.style.top = y + "px";
+
+        gardenArea.appendChild(flower);
+
+        flowerCount++;
+        flowerCountElement.textContent = flowerCount;
+
+        createLoveMessage(x, y);
+        createSparkles(x, y);
+        checkMilestone(flowerCount);
+      }
+
+      /* ---------------- LOVE MESSAGE ---------------- */
+
+      function createLoveMessage(x, y) {
+        const message = document.createElement("div");
+
+        message.className = "love-message";
+        message.textContent = randomItem(loveMessages);
+
+        let messageX = x;
+        let messageY = y - 40;
+
+        const estimatedWidth = Math.min(
+          message.textContent.length * 8 + 45,
+          window.innerWidth * .82
+        );
+
+        const halfWidth = estimatedWidth / 2;
+
+        if (messageX < halfWidth + 8) {
+          messageX = halfWidth + 8;
+        }
+
+        if (messageX > window.innerWidth - halfWidth - 8) {
+          messageX = window.innerWidth - halfWidth - 8;
+        }
+
+        messageY = Math.max(90, messageY);
+
+        message.style.left = messageX + "px";
+        message.style.top = messageY + "px";
+
+        garden.appendChild(message);
+
+        setTimeout(() => {
+          message.remove();
+        }, 1750);
+      }
+
+      /* ---------------- SPARKLES ---------------- */
+
+      function createSparkles(x, y) {
+        const amount = Math.floor(random(6, 10));
+
+        for (let i = 0; i < amount; i++) {
+          const sparkle = document.createElement("div");
+
+          sparkle.className = "sparkle";
+          sparkle.textContent = randomItem(sparkleCharacters);
+
+          sparkle.style.left = x + random(-5, 5) + "px";
+          sparkle.style.top = y + random(-5, 5) + "px";
+
+          const angle = random(0, Math.PI * 2);
+          const distance = random(30, 75);
+
+          sparkle.style.setProperty(
+            "--dx",
+            Math.cos(angle) * distance + "px"
+          );
+
+          sparkle.style.setProperty(
+            "--dy",
+            Math.sin(angle) * distance + "px"
+          );
+
+          sparkle.style.setProperty(
+            "--rotation",
+            random(-180, 180) + "deg"
+          );
+
+          sparkle.style.animationDelay = random(0, .15) + "s";
+
+          garden.appendChild(sparkle);
+
+          setTimeout(() => {
+            sparkle.remove();
+          }, 1050);
+        }
+      }
+
+      /* ---------------- MILESTONES ---------------- */
+
+      function checkMilestone(count) {
+        if (count === 1) {
+          showMilestone("🌱 The first flower has bloomed!");
+        }
+
+        if (count === 10) {
+          showMilestone("🌷 Your garden is getting beautiful!");
+        }
+
+        if (count === 25) {
+          showMilestone("💖 Look at your little garden!");
+        }
+      }
+
+      function showMilestone(text) {
+        clearTimeout(milestoneTimer);
+
+        milestone.classList.remove("show");
+
+        void milestone.offsetWidth;
+
+        milestone.textContent = text;
+        milestone.classList.add("show");
+
+        milestoneTimer = setTimeout(() => {
+          milestone.classList.remove("show");
+        }, 2600);
+      }
+
+      /* ---------------- CLEAR GARDEN ---------------- */
+
+      clearButton.addEventListener("click", event => {
+        event.stopPropagation();
+
+        if (currentStep !== 3) return;
+
+        const plantedFlowers = gardenArea.querySelectorAll(".flower");
+
+        plantedFlowers.forEach((flower, index) => {
+          setTimeout(() => {
+            flower.style.transition = "opacity .3s ease, transform .3s ease";
+            flower.style.opacity = "0";
+            flower.style.transform =
+              "translate(-50%, -50%) scale(.4)";
+
+            setTimeout(() => {
+              flower.remove();
+            }, 320);
+          }, index * 12);
+        });
+
+        flowerCount = 0;
+        flowerCountElement.textContent = "0";
+
+        milestone.classList.remove("show");
+      });
+
+      /* ---------------- SURPRISE ---------------- */
+
+      surpriseButton.addEventListener("click", async event => {
+        event.stopPropagation();
+
+        if (surpriseRunning || currentStep !== 3) return;
+
+        surpriseRunning = true;
+        surpriseButton.disabled = true;
+
+        const oldText = surpriseButton.textContent;
+        surpriseButton.textContent = "Growing... 🌸";
+
+        const paddingX = Math.min(45, window.innerWidth * .08);
+        const topLimit = Math.min(
+          145,
+          window.innerHeight * .22
+        );
+        const bottomLimit = Math.max(
+          topLimit + 50,
+          window.innerHeight - 125
+        );
+
+        for (let i = 0; i < 15; i++) {
+          const x = random(
+            paddingX,
+            Math.max(paddingX + 1, window.innerWidth - paddingX)
+          );
+
+          const y = random(
+            topLimit,
+            bottomLimit
+          );
+
+          plantFlower(x, y);
+
+          await delay(random(130, 280));
+        }
+
+        surpriseRunning = false;
+        surpriseButton.disabled = false;
+        surpriseButton.textContent = oldText;
+      });
+
+      /* ---------------- RESIZE SAFETY ---------------- */
+
+      window.addEventListener("resize", () => {
+        const existingPetals = petals.querySelectorAll(".petal");
+
+        existingPetals.forEach(petal => {
+          petal.style.maxWidth = "100vw";
+        });
+      });
+
+    })();
+  </script>
+</body>
+</html>
